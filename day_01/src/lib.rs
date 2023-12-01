@@ -14,6 +14,33 @@ pub fn process_part1(input: &str) -> String {
 }
 
 pub fn process_part2(input: &str) -> String {
+    fn get_valid_substring(input: &str) -> String {
+        fn get_valid_start_substring(input: &str) -> String {
+            if starts_with_correct(input) {
+                return input.into();
+            }
+            for i in 1..input.len() {
+                if starts_with_correct(&input[i..]) {
+                    return input[i..].into();
+                }
+            }
+            "".into()
+        }
+        fn get_valid_end_substring(input: &str) -> String {
+            let input: String = input.chars().rev().collect();
+            if starts_with_correct(&input) {
+                return input.chars().rev().collect();
+            }
+            for i in 1..input.len() {
+                if starts_with_correct(&input[i..]) {
+                    return input[i..].chars().rev().collect();
+                }
+            }
+            "".into()
+        }
+        let stripped_start = get_valid_start_substring(input);
+        get_valid_end_substring(&stripped_start)
+    }
     let mut sum: u32 = 0;
     for line in input.lines() {
         let line = get_valid_substring(line);
@@ -24,33 +51,6 @@ pub fn process_part2(input: &str) -> String {
         sum += res
     }
     sum.to_string()
-}
-fn get_valid_start_substring(input: &str) -> String {
-    if starts_with_correct(input) {
-        return input.into();
-    }
-    for i in 1..input.len() {
-        if starts_with_correct(&input[i..]) {
-            return input[i..].into();
-        }
-    }
-    "".into()
-}
-fn get_valid_end_substring(input: &str) -> String {
-    let input: String = input.chars().rev().collect();
-    if starts_with_correct(&input) {
-        return input.chars().rev().collect();
-    }
-    for i in 1..input.len() {
-        if starts_with_correct(&input[i..]) {
-            return input[i..].chars().rev().collect();
-        }
-    }
-    "".into()
-}
-fn get_valid_substring(input: &str) -> String {
-    let stripped_start = get_valid_start_substring(input);
-    get_valid_end_substring(&stripped_start)
 }
 fn starts_with_correct(s: &str) -> bool {
     let arr = &[
