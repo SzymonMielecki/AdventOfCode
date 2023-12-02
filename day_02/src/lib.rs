@@ -1,7 +1,7 @@
 use nom::{
     branch::alt,
     bytes::complete::tag,
-    character::complete::{char, digit1, space0},
+    character::complete::{space0, u32},
     combinator::value,
     multi::separated_list0,
     sequence::{delimited, separated_pair, tuple},
@@ -31,8 +31,6 @@ pub fn process_part2(input: &str) -> String {
         .sum::<u32>()
         .to_string()
 }
-
-use nom::character::complete::u32;
 
 fn parse_line(input: &str) -> IResult<&str, (u32, Vec<(u32, Color)>)> {
     tuple((
@@ -70,6 +68,15 @@ enum Color {
 
 impl Game {
     pub fn deconstruct(res: IResult<&str, (u32, Vec<(u32, Color)>)>) -> Self {
+        if res.is_err() {
+            return Game {
+                id: 0,
+                valid: false,
+                green_count: 0,
+                blue_count: 0,
+                red_count: 0,
+            };
+        }
         let (_, (id, colors)) = res.unwrap();
         let mut game = Game {
             id,
@@ -129,4 +136,3 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green";
         assert_eq!(processed, "2286")
     }
 }
-
