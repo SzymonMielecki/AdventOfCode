@@ -9,24 +9,18 @@ use nom::{
 };
 
 pub fn process_part1(input: &str) -> String {
-    let mut games: Vec<Game> = Vec::new();
-    for line in input.lines() {
-        games.push(Game::deconstruct(parse_line(line)))
-    }
-    games
-        .iter()
+    input
+        .lines()
+        .map(|x| Game::deconstruct(parse_line(x)))
         .filter(|x| x.valid)
         .map(|x| x.id)
         .sum::<u32>()
         .to_string()
 }
 pub fn process_part2(input: &str) -> String {
-    let mut games: Vec<Game> = Vec::new();
-    for line in input.lines() {
-        games.push(Game::deconstruct(parse_line(line)))
-    }
-    games
-        .iter()
+    input
+        .lines()
+        .map(|x| Game::deconstruct(parse_line(x)))
         .map(|x| x.green_count * x.blue_count * x.red_count)
         .sum::<u32>()
         .to_string()
