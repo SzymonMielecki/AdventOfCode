@@ -9,22 +9,24 @@ pub fn process_part1(input: &str) -> String {
 
         let mut result = vec![vec![false; cols]; rows];
 
-        for i in 0..rows {
-            for j in 0..cols {
-                if SYMBOLS.contains(&grid[i][j]) {
-                    for x in -1..=1 {
-                        for y in -1..=1 {
+        grid.iter().enumerate().for_each(|(i, l)| {
+            l.iter().enumerate().for_each(|(j, c)| {
+                if SYMBOLS.contains(&c) {
+                    (-1..=1).for_each(|x| {
+                        (-1..=1).for_each(|y| {
                             let ni = i as i32 + x;
                             let nj = j as i32 + y;
 
-                            if ni >= 0 && ni < rows as i32 && nj >= 0 && nj < cols as i32 {
+                            if (0..rows).contains(&(ni as usize))
+                                && (0..cols).contains(&(nj as usize))
+                            {
                                 result[ni as usize][nj as usize] = true;
                             }
-                        }
-                    }
+                        })
+                    })
                 }
-            }
-        }
+            })
+        });
         result
     }
     fn digit_to_num_grid(grid: &Vec<Vec<Option<u32>>>) -> Vec<Vec<Option<u32>>> {
@@ -84,17 +86,7 @@ pub fn process_part1(input: &str) -> String {
                         }
                     })
             });
-        // for i in 0..rows {
-        //     for j in 0..cols {
-        //         if valid_grid[i][j] && num_grid[i][j].is_some() {
-        //             result[i][j] = num_grid[i][j];
-        //             for n in 0..cols {
-        //                 if n != j && result[i][n] == result[i][j] {
-        //                     result[i][n] = None;
-        //                 }
-        //             }
-        //         }
-        //     }
+
         let filtered_matrix: Vec<Vec<Option<u32>>> = result
             .into_iter()
             .map(|row| {
