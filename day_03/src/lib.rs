@@ -1,7 +1,5 @@
 use nom::{character::complete::anychar, multi::many0, IResult};
 
-const SYMBOLS: [char; 11] = ['$', '@', '+', '&', '/', '*', '%', '=', '-', '#', '*'];
-
 pub fn process_part1(input: &str) -> String {
     fn map_to_bool_grid(grid: &Vec<Vec<char>>) -> Vec<Vec<bool>> {
         let rows = grid.len();
@@ -11,7 +9,7 @@ pub fn process_part1(input: &str) -> String {
 
         grid.iter().enumerate().for_each(|(i, l)| {
             l.iter().enumerate().for_each(|(j, c)| {
-                if SYMBOLS.contains(&c) {
+                if !c.is_ascii_digit() && *c != '.' {
                     (-1..=1).for_each(|x| {
                         (-1..=1).for_each(|y| {
                             let ni = i as i32 + x;
@@ -42,6 +40,7 @@ pub fn process_part1(input: &str) -> String {
                 }
             }
         }
+        // this checks for 2 digit numbers
         for i in 0..rows {
             for j in 0..cols {
                 if j < cols - 1 {
@@ -54,6 +53,7 @@ pub fn process_part1(input: &str) -> String {
                 }
             }
         }
+        // this checks for 3 digit numbers
         for i in 0..rows {
             for j in 0..cols {
                 if j < cols - 1 {
