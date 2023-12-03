@@ -70,20 +70,41 @@ pub fn process_part1(input: &str) -> String {
         let rows = num_grid.len();
         let cols = num_grid[0].len();
         let mut result = vec![vec![None; cols]; rows];
-        for i in 0..rows {
-            for j in 0..cols {
-                if valid_grid[i][j] && num_grid[i][j].is_some() {
-                    result[i][j] = num_grid[i][j];
-                    for n in 0..cols {
-                        if n != j && result[i][n] == result[i][j] {
-                            result[i][n] = None;
+        num_grid
+            .iter()
+            .zip(valid_grid.iter())
+            .zip(result.iter_mut())
+            .for_each(|((nl, vl), rl)| {
+                nl.iter()
+                    .zip(vl.iter())
+                    .zip(rl.iter_mut())
+                    .for_each(|((n, v), r)| {
+                        if *v && n.is_some() {
+                            *r = *n;
                         }
-                    }
-                }
-            }
-        }
-        dbg!(&result);
-        result
+                    })
+            });
+        // for i in 0..rows {
+        //     for j in 0..cols {
+        //         if valid_grid[i][j] && num_grid[i][j].is_some() {
+        //             result[i][j] = num_grid[i][j];
+        //             for n in 0..cols {
+        //                 if n != j && result[i][n] == result[i][j] {
+        //                     result[i][n] = None;
+        //                 }
+        //             }
+        //         }
+        //     }
+        let filtered_matrix: Vec<Vec<Option<u32>>> = result
+            .into_iter()
+            .map(|row| {
+                let mut seen_values = std::collections::HashSet::new();
+                row.into_iter()
+                    .map(|x| x.filter(|&v| seen_values.insert(v)).map(|v| v))
+                    .collect()
+            })
+            .collect();
+        filtered_matrix
             .iter()
             .flat_map(|row| row.iter())
             .filter_map(|&value| value)

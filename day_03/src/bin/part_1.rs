@@ -12,7 +12,7 @@ fn main() {
     // ..592.....
     // ......755.
     // ...$.*....
-    // .664.598..";
+    // .664.598.."
     let input = fs::read_to_string("./input.txt").unwrap();
     dbg!(process_part1(&input));
 }
