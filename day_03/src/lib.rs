@@ -69,35 +69,43 @@ pub fn process_part1(input: &str) -> String {
     fn join_grids(num_grid: &Vec<Vec<Option<u32>>>, valid_grid: &Vec<Vec<bool>>) -> u32 {
         let rows = num_grid.len();
         let cols = num_grid[0].len();
-        let mut result = num_grid.clone();
-        let mut sum = 0;
+        let mut result = vec![vec![None; cols]; rows];
         for i in 0..rows {
             for j in 0..cols {
-                if valid_grid[i][j] && result[i][j].is_some() {
-                    if j > 0 && result[i][j - 1].is_some() {
-                        result[i][j - 1] = None;
+                if valid_grid[i][j] && num_grid[i][j].is_some() {
+                    result[i][j] = num_grid[i][j];
+                    for n in 0..cols {
+                        if n != j && result[i][n] == result[i][j] {
+                            result[i][n] = None;
+                        }
                     }
-                    if j < cols - 1 && result[i][j + 1].is_some() {
-                        result[i][j + 1] = None;
-                    }
-                    sum += result[i][j].unwrap();
-                    result[i][j] = None;
                 }
             }
         }
-        sum
+        dbg!(&result);
+        result
+            .iter()
+            .flat_map(|row| row.iter())
+            .filter_map(|&value| value)
+            .sum()
     }
 
-    let grid: Vec<Vec<char>> = input.lines().map(|x| parse_line(x).unwrap().1).collect();
+    let grid: Vec<Vec<char>> = input
+        .lines()
+        .map(|x| parse_line(x).expect("should work").1)
+        .collect();
 
-    let valid_grid = map_to_bool_grid(&grid);
     let digit_grid: Vec<Vec<Option<u32>>> = grid
         .iter()
         .map(|l| l.iter().map(|c| c.to_digit(10)).collect())
         .collect();
 
+    let valid_grid = map_to_bool_grid(&grid);
+
     let num_grid = digit_to_num_grid(&digit_grid);
+
     let sum = join_grids(&num_grid, &valid_grid);
+
     sum.to_string()
 }
 fn parse_line(input: &str) -> IResult<&str, Vec<char>> {
