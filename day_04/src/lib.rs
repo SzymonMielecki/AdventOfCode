@@ -63,21 +63,16 @@ pub fn process_part2(input: &str) -> String {
         .collect();
 
     for i in 0..winning.len() {
-        for j in 1..=(winning[i].copies + winning[i].mutual.len() as u32) {
-            if let Some(n) = winning.iter_mut().find(|x| x.id == i as u32 + j + 1) {
-                println!("added {i}, {j}");
-                n.copies += 1
+        for n in 1..=winning[i].mutual.len() {
+            for j in 1..=winning[i].copies {
+                if let Some(m) = winning.iter_mut().find(|x| x.id == i as u32 + n as u32 + 1) {
+                    m.copies += 1
+                }
             }
         }
     }
 
-    dbg!(&winning);
-    winning
-        .iter()
-        .filter(|x| x.mutual.len() > 0)
-        .map(|w| w.copies)
-        .sum::<u32>()
-        .to_string()
+    winning.iter().map(|w| w.copies).sum::<u32>().to_string()
 }
 
 #[cfg(test)]
