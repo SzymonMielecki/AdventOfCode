@@ -2,131 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use nom::{character::complete::anychar, multi::many0, IResult};
 
-// pub fn process_part1(input: &str) -> String {
-//     fn map_to_bool_grid(grid: &Vec<Vec<char>>) -> Vec<Vec<bool>> {
-//         let rows = grid.len();
-//         let cols = grid[0].len();
-//
-//         let mut result = vec![vec![false; cols]; rows];
-//
-//         grid.iter().enumerate().for_each(|(i, l)| {
-//             l.iter().enumerate().for_each(|(j, c)| {
-//                 if !c.is_ascii_digit() && *c != '.' {
-//                     (-1..=1).for_each(|x| {
-//                         (-1..=1).for_each(|y| {
-//                             let ni = i as i32 + x;
-//                             let nj = j as i32 + y;
-//
-//                             if (0..rows).contains(&(ni as usize))
-//                                 && (0..cols).contains(&(nj as usize))
-//                             {
-//                                 result[ni as usize][nj as usize] = true;
-//                             }
-//                         })
-//                     })
-//                 }
-//             })
-//         });
-//         result
-//     }
-//     fn digit_to_num_grid(grid: &Vec<Vec<Option<u32>>>) -> Vec<Vec<Option<u32>>> {
-//         let rows = grid.len();
-//         let cols = grid[0].len();
-//
-//         let mut result = grid.clone();
-//
-//         (0..rows).for_each(|i| {
-//             (0..cols).for_each(|j| {
-//                 if j > 0 {
-//                     if result[i][j - 1].is_some() && result[i][j].is_some() {
-//                         result[i][j] = Some(result[i][j - 1].unwrap() * 10 + result[i][j].unwrap())
-//                     }
-//                 }
-//             })
-//         });
-//         // this checks for 2 digit numbers
-//         (0..rows).for_each(|i| {
-//             (0..cols).for_each(|j| {
-//                 if j < cols - 1 {
-//                     if result[i][j].is_some()
-//                         && result[i][j + 1].is_some()
-//                         && result[i][j + 1].unwrap() > result[i][j].unwrap()
-//                     {
-//                         result[i][j] = result[i][j + 1];
-//                     }
-//                 }
-//             })
-//         });
-//         // this checks for 3 digit numbers
-//         (0..rows).for_each(|i| {
-//             (0..cols).for_each(|j| {
-//                 if j < cols - 1 {
-//                     if result[i][j].is_some()
-//                         && result[i][j + 1].is_some()
-//                         && result[i][j + 1].unwrap() > result[i][j].unwrap()
-//                     {
-//                         result[i][j] = result[i][j + 1];
-//                     }
-//                 }
-//             })
-//         });
-//         result
-//     }
-//     fn join_grids(num_grid: &Vec<Vec<Option<u32>>>, valid_grid: &Vec<Vec<bool>>) -> u32 {
-//         let rows = num_grid.len();
-//         let cols = num_grid[0].len();
-//         let mut result = vec![vec![None; cols]; rows];
-//         num_grid
-//             .iter()
-//             .zip(valid_grid.iter())
-//             .zip(result.iter_mut())
-//             .for_each(|((nl, vl), rl)| {
-//                 nl.iter()
-//                     .zip(vl.iter())
-//                     .zip(rl.iter_mut())
-//                     .for_each(|((n, v), r)| {
-//                         if *v && n.is_some() {
-//                             *r = *n;
-//                         }
-//                     })
-//             });
-//
-//         let filtered_matrix: Vec<Vec<Option<u32>>> = result
-//             .into_iter()
-//             .map(|row| {
-//                 let mut seen_values = std::collections::HashSet::new();
-//                 row.into_iter()
-//                     .map(|x| x.filter(|&v| seen_values.insert(v)).map(|v| v))
-//                     .collect()
-//             })
-//             .collect();
-//         filtered_matrix
-//             .iter()
-//             .flat_map(|row| row.iter())
-//             .filter_map(|&value| value)
-//             .sum()
-//     }
-//
-//     let grid: Vec<Vec<char>> = input
-//         .lines()
-//         .map(|x| parse_line(x).expect("should work").1)
-//         .collect();
-//
-//     let digit_grid: Vec<Vec<Option<u32>>> = grid
-//         .iter()
-//         .map(|l| l.iter().map(|c| c.to_digit(10)).collect())
-//         .collect();
-//
-//     let valid_grid = map_to_bool_grid(&grid);
-//
-//     let num_grid = digit_to_num_grid(&digit_grid);
-//
-//     let sum = join_grids(&num_grid, &valid_grid);
-//
-//     sum.to_string()
-// }
-
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 enum Value {
     Empty,
     Symbol,
@@ -164,6 +40,37 @@ pub struct SharedCoordinates {
 impl SharedCoordinates {
     pub fn new(x: Vec<i32>, y: i32) -> Self {
         SharedCoordinates { x, y }
+    }
+    pub fn from(v: Vec<Coordinates>) -> Result<Self, ()> {
+        if v.len() == 0 {
+            return Err(());
+        };
+        let y = v[0].y;
+        if !v.iter().all(|x| x.y == y) {
+            return Err(());
+        }
+        let mut x = vec![v[0].x];
+        for c in v.iter() {
+            if x.contains(&(c.x - 1)) || x.contains(&(c.x + 1)) {
+                x.push(c.x);
+            } else if !x.contains(&(c.x)) {
+                return Err(());
+            }
+        }
+        Ok(Self::new(x, y))
+    }
+    fn contains(&self, other: &SharedCoordinates) -> bool {
+        if self.y != other.y {
+            return false;
+        }
+        let self_x = self.x.clone();
+        let other_x = other.x.clone();
+        for ox in other_x {
+            if !self_x.contains(&ox) {
+                return false;
+            }
+        }
+        true
     }
 }
 pub fn process_part1(input: &str) -> String {
@@ -222,30 +129,49 @@ pub fn process_part1(input: &str) -> String {
         coords
     }
 
-    fn join_adjacent_digits(input: &HashMap<Coordinates, Value>) -> HashMap<Coordinates, Value> {
-        let mut coords = input.clone();
-
-        for (c, v) in input.iter() {
-            if let Value::Digit(v) = v {
-                let mut adj: Vec<i32> = vec![];
+    fn join_adjacent_digits(
+        input: &HashMap<Coordinates, Value>,
+    ) -> HashMap<SharedCoordinates, Value> {
+        let mut res = HashMap::new();
+        for (c, value) in input.iter() {
+            let mut this_num: Vec<(Value, Coordinates)> = vec![];
+            if let Value::Digit(v) = value {
                 for offset in -1..=1 {
-                    println!("({},{})", c.x + offset, c.y);
-                    if let Some(n) = coords.get_mut(&(Coordinates::new(c.x + offset, c.y))) {
-                        if let Value::Number(m) = n {
-                            println!("{m:?}");
-                            adj.push(*m as i32)
-                        } else if let Value::Digit(m) = n {
-                            println!("{m:?}");
-                            adj.push(*m as i32)
-                        }
+                    if let Some(adj) = input.get(&Coordinates::new(c.x + offset, c.y)) {
+                        this_num.push((*adj, Coordinates::new(c.x + offset, c.y)))
                     }
                 }
-                println!("{c:?}, {adj:?}");
-                println!("-------------------------");
+            }
+            println!("{this_num:?}");
+            this_num.sort_by(|a, b| a.1.x.cmp(&b.1.x));
+            let this_num_val: Value = Value::Number(
+                this_num
+                    .iter()
+                    .filter_map(|x| {
+                        if let Value::Digit(n) = x.0 {
+                            Some(n)
+                        } else {
+                            None
+                        }
+                    })
+                    .fold(0, |acc, x| acc * 10 + x),
+            );
+            if let Ok(n) = SharedCoordinates::from(this_num.iter().map(|(v, c)| *c).collect()) {
+                res.insert(n, this_num_val);
+            }
+
+            println!("-------------------------");
+        }
+        res
+    }
+    fn filter_adjacent_digits(hm: &mut HashMap<SharedCoordinates, Value>) {
+        let binding = hm.clone();
+        let keys = binding.keys();
+        for k in keys.clone() {
+            if keys.clone().into_iter().any(|x| x != k && x.contains(k)) {
+                hm.remove(k);
             }
         }
-
-        coords
     }
     let char_grid: Vec<Vec<char>> = input
         .lines()
@@ -262,8 +188,10 @@ pub fn process_part1(input: &str) -> String {
         get_adjacent_to_symbols(&symbol_coordinates, rows, cols);
 
     let digit_coordinates = get_digit_coordinates(&enum_grid);
-    let num_coordinates = join_adjacent_digits(&digit_coordinates);
-
+    let mut num_coordinates = join_adjacent_digits(&digit_coordinates);
+    dbg!(&num_coordinates);
+    filter_adjacent_digits(&mut num_coordinates);
+    dbg!(&num_coordinates);
     "".into()
 }
 fn parse_line(input: &str) -> IResult<&str, Vec<char>> {
