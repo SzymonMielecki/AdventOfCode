@@ -11,8 +11,6 @@ use nom::{
 #[derive(Debug, Clone)]
 struct Game {
     id: u32,
-    winnging_nums: Vec<u32>,
-    my_nums: Vec<u32>,
     mutual: Vec<u32>,
     copies: u32,
 }
@@ -27,8 +25,6 @@ impl Game {
             .collect();
         Game {
             id,
-            winnging_nums,
-            my_nums,
             mutual,
             copies: 1,
         }
@@ -63,10 +59,10 @@ pub fn process_part2(input: &str) -> String {
         .collect();
 
     for i in 0..winning.len() {
-        for n in 1..=winning[i].mutual.len() {
-            for j in 1..=winning[i].copies {
-                if let Some(m) = winning.iter_mut().find(|x| x.id == i as u32 + n as u32 + 1) {
-                    m.copies += 1
+        for j in 1..=winning[i].mutual.len() {
+            for _ in 1..=winning[i].copies {
+                if let Some(n) = winning.iter_mut().find(|x| x.id == i as u32 + j as u32 + 1) {
+                    n.copies += 1
                 }
             }
         }
