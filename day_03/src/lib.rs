@@ -1,4 +1,7 @@
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    vec,
+};
 
 use nom::{character::complete::anychar, multi::many0, IResult};
 
@@ -72,6 +75,16 @@ impl SharedCoordinates {
         }
         true
     }
+    fn not_contains_simple(&self, other: &Coordinates) -> Option<SharedCoordinates> {
+        if self.y != other.y {
+            return None;
+        }
+        let self_x = self.x.clone();
+        if !self_x.contains(&other.x) {
+            return None;
+        }
+        return Some(self.clone());
+    }
 }
 pub fn process_part1(input: &str) -> String {
     fn map_to_enum(grid: &Vec<Vec<char>>) -> Vec<Vec<Value>> {
@@ -79,11 +92,11 @@ pub fn process_part1(input: &str) -> String {
             .map(|l| {
                 l.iter()
                     .map(|c| match c {
-                        '.' => Value::Empty,
                         c if c.is_ascii_digit() => {
                             Value::Digit(c.to_digit(10).expect("should be digit"))
                         }
-                        _ => Value::Symbol,
+                        '*' => Value::Symbol,
+                        _ => Value::Empty,
                     })
                     .collect()
             })
@@ -142,7 +155,6 @@ pub fn process_part1(input: &str) -> String {
                     }
                 }
             }
-            println!("{this_num:?}");
             this_num.sort_by(|a, b| a.1.x.cmp(&b.1.x));
             let this_num_val: Value = Value::Number(
                 this_num
@@ -159,8 +171,6 @@ pub fn process_part1(input: &str) -> String {
             if let Ok(n) = SharedCoordinates::from(this_num.iter().map(|(v, c)| *c).collect()) {
                 res.insert(n, this_num_val);
             }
-
-            println!("-------------------------");
         }
         res
     }
@@ -172,6 +182,44 @@ pub fn process_part1(input: &str) -> String {
                 hm.remove(k);
             }
         }
+    }
+    fn get_res(
+        symbol_coordinates: &Vec<Coordinates>,
+        num_coordinates: &HashMap<SharedCoordinates, Value>,
+    ) -> Vec<u32> {
+        let sc = symbol_coordinates.clone();
+        let nc = num_coordinates.clone();
+        let binding = nc.clone();
+        let nc_keys = binding.keys().clone();
+        let mut set = HashSet::new();
+
+        for c in sc {
+            let rem: Vec<SharedCoordinates> = nc_keys
+                .clone()
+                .into_iter()
+                .map(|x| x.not_contains_simple(&c))
+                .filter(|x| x.is_some())
+                .map(|x| x.expect("checked"))
+                .collect();
+            for r in rem {
+                set.insert(r);
+            }
+        }
+        let mut values = vec![];
+        for k in set.iter() {
+            values.push(num_coordinates.get(k));
+        }
+
+        values
+            .iter()
+            .map(|x| {
+                if let Some(Value::Number(n)) = x {
+                    *n
+                } else {
+                    0
+                }
+            })
+            .collect()
     }
     let char_grid: Vec<Vec<char>> = input
         .lines()
@@ -189,10 +237,9 @@ pub fn process_part1(input: &str) -> String {
 
     let digit_coordinates = get_digit_coordinates(&enum_grid);
     let mut num_coordinates = join_adjacent_digits(&digit_coordinates);
-    dbg!(&num_coordinates);
     filter_adjacent_digits(&mut num_coordinates);
-    dbg!(&num_coordinates);
-    "".into()
+    let res = get_res(&symbol_adjacent, &num_coordinates);
+    res.iter().sum::<u32>().to_string()
 }
 fn parse_line(input: &str) -> IResult<&str, Vec<char>> {
     many0(anychar)(input)
