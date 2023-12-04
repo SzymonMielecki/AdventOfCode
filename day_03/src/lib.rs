@@ -92,11 +92,11 @@ pub fn process_part1(input: &str) -> String {
             .map(|l| {
                 l.iter()
                     .map(|c| match c {
+                        '.' => Value::Empty,
                         c if c.is_ascii_digit() => {
                             Value::Digit(c.to_digit(10).expect("should be digit"))
                         }
-                        '*' => Value::Symbol,
-                        _ => Value::Empty,
+                        _ => Value::Symbol,
                     })
                     .collect()
             })
