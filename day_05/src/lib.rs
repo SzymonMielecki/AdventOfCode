@@ -4,7 +4,7 @@ use nom::{
     bytes::complete::tag,
     character::complete::{newline, space0, space1, u64},
     multi::{separated_list0, separated_list1},
-    sequence::{delimited, terminated, tuple},
+    sequence::{delimited, tuple},
     IResult,
 };
 
@@ -18,30 +18,28 @@ impl Location {
             options: vv.into_iter().map(|v| Row::new(v[0], v[1], v[2])).collect(),
         }
     }
-    fn get_output(&self, value: &u64) -> u64 {
-        for opt in &self.options {
-            let o = opt.get_output(value);
-            if o.is_some() {
-                return o.expect("checked");
-            }
-        }
-        *value
+    fn get_output(&self, value: u64) -> u64 {
+        self.options
+            .iter()
+            .filter_map(|opt| opt.get_output(value))
+            .min()
+            .unwrap_or(value)
     }
 }
 struct Row {
-    source_range: Range<u64>,
     dest_start: u64,
+    source_range: Range<u64>,
 }
 
 impl Row {
     pub fn new(dest_start: u64, source_start: u64, len: u64) -> Self {
         Row {
-            source_range: (source_start..source_start + len),
             dest_start,
+            source_range: (source_start..source_start + len),
         }
     }
-    fn get_output(&self, value: &u64) -> Option<u64> {
-        if !self.source_range.contains(value) {
+    fn get_output(&self, value: u64) -> Option<u64> {
+        if !self.source_range.contains(&value) {
             return None;
         }
         Some(&self.dest_start + value - self.source_range.start)
@@ -58,13 +56,15 @@ pub fn process_part1(input: &str) -> String {
     let temperature_to_humidity = Location::new(t2h);
     let humidity_to_location = Location::new(h2l);
     seeds
-        .iter()
+        .into_iter()
         .map(|seed| {
-            humidity_to_location.get_output(&temperature_to_humidity.get_output(
-                &light_to_temperature.get_output(
-                    &water_to_light.get_output(&fertilizer_to_water.get_output(
-                        &soil_to_fertilizer.get_output(&seed_to_soil.get_output(seed)),
-                    )),
+            humidity_to_location.get_output(temperature_to_humidity.get_output(
+                light_to_temperature.get_output(
+                    water_to_light.get_output(
+                        fertilizer_to_water.get_output(
+                            soil_to_fertilizer.get_output(seed_to_soil.get_output(seed)),
+                        ),
+                    ),
                 ),
             ))
         })
@@ -127,9 +127,10 @@ fn parse_file(
             separated_list1(newline, separated_list1(space1, u64)),
             tuple((newline, newline)),
         ),
-        terminated(
-            separated_list0(newline, separated_list1(space0, u64)),
+        delimited(
             tuple((tag("humidity-to-location map:"), newline)),
+            separated_list1(newline, separated_list1(space1, u64)),
+            space0,
         ),
     ))(input)
 }
