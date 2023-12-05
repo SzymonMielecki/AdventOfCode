@@ -7,6 +7,7 @@ use nom::{
     sequence::{delimited, tuple},
     IResult,
 };
+use rayon::{iter::ParallelIterator, slice::ParallelSlice};
 
 struct Location {
     options: Vec<Row>,
@@ -73,7 +74,32 @@ pub fn process_part1(input: &str) -> String {
         .to_string()
 }
 pub fn process_part2(input: &str) -> String {
-    input.into()
+    let processed = parse_file(&input).expect("should work").1;
+    let (seeds, s2s, s2f, f2w, w2l, l2t, t2h, h2l) = processed;
+    let seed_to_soil = Location::new(s2s);
+    let soil_to_fertilizer = Location::new(s2f);
+    let fertilizer_to_water = Location::new(f2w);
+    let water_to_light = Location::new(w2l);
+    let light_to_temperature = Location::new(l2t);
+    let temperature_to_humidity = Location::new(t2h);
+    let humidity_to_location = Location::new(h2l);
+    seeds
+        .par_chunks(2)
+        .flat_map(|x| (x[0]..x[0] + x[1]).collect::<Vec<u64>>())
+        .map(|seed| {
+            humidity_to_location.get_output(temperature_to_humidity.get_output(
+                light_to_temperature.get_output(
+                    water_to_light.get_output(
+                        fertilizer_to_water.get_output(
+                            soil_to_fertilizer.get_output(seed_to_soil.get_output(seed)),
+                        ),
+                    ),
+                ),
+            ))
+        })
+        .min()
+        .unwrap()
+        .to_string()
 }
 
 fn parse_file(
@@ -179,8 +205,40 @@ humidity-to-location map:
     }
     #[test]
     fn part2() {
-        let input = "";
+        let input = "seeds: 79 14 55 13
+
+seed-to-soil map:
+50 98 2
+52 50 48
+
+soil-to-fertilizer map:
+0 15 37
+37 52 2
+39 0 15
+
+fertilizer-to-water map:
+49 53 8
+0 11 42
+42 0 7
+57 7 4
+
+water-to-light map:
+88 18 7
+18 25 70
+
+light-to-temperature map:
+45 77 23
+81 45 19
+68 64 13
+
+temperature-to-humidity map:
+0 69 1
+1 0 69
+
+humidity-to-location map:
+60 56 37
+56 93 4";
         let processed = process_part2(&input);
-        assert_eq!(processed, "")
+        assert_eq!(processed, "46")
     }
 }
