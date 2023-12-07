@@ -101,7 +101,7 @@ impl Variant {
                         tmp_var = Variant::FiveOfAKind
                     }
                 }
-                Variant::FullHouse => tmp_var = Variant::FourOfAKind,
+                Variant::FullHouse => tmp_var = Variant::FiveOfAKind,
                 Variant::FiveOfAKind => (),
             }
         }
